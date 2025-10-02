@@ -1,27 +1,355 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="REPOSICAO_PELO_ESTOQUE_MIN_MAX" language="groovy" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="REPOSICAO_PELO_ESTOQUE_MIN_MAX" language="groovy" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="2.1435888100000056"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="P_CODGRUPOPROD" class="java.math.BigDecimal">
+		<property name="nomeTabela" value="TGFGRU"/>
+		<parameterDescription><![CDATA[Grupo de Produto]]></parameterDescription>
+		<defaultValueExpression><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<parameter name="P_CODPROD" class="java.math.BigDecimal">
+		<property name="nomeTabela" value="TGFPRO"/>
+		<parameterDescription><![CDATA[Produto]]></parameterDescription>
+		<defaultValueExpression><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<parameter name="P_USUARIO" class="java.math.BigDecimal">
+		<property name="nomeTabela" value="TSIUSU"/>
+		<parameterDescription><![CDATA[Usuário]]></parameterDescription>
+		<defaultValueExpression><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT
+    GRU.CODGRUPOPROD AS CODGRUPOPROD,
+    GRU.DESCRGRUPOPROD AS DESCRICAO_GRUPO,
+    PRO.CODPROD AS COD_PRODUTO,
+    PRO.DESCRPROD AS DESCRICAO_PRODUTO,
+    PRO.CODVOL AS UNIDADE,
+    NVL(LOC.CODLOCAL, 0) AS COD_LEST,
+    NVL(LOC.DESCRLOCAL, 'SEM LOCAL') AS LOCAL_EST,
+    PRO.ESTMIN  AS ESTQ_MIN,
+    PRO.ESTMAX AS ESTQ_MAX,
+    SUM(NVL(ROUND(EST.ESTOQUE, 2), 0)) AS ESTOQUE,
+    NVL(PRO.ESTMAX,0) - SUM(NVL(EST.ESTOQUE,0)) AS NECESSIDADE_DE_COMPRA
+FROM TGFGRU GRU
+JOIN TGFPRO PRO
+       ON GRU.CODGRUPOPROD = PRO.CODGRUPOPROD
+LEFT JOIN TGFEST EST
+       ON PRO.CODPROD = EST.CODPROD
+      AND EST.CODLOCAL = PRO.CODLOCALPADRAO
+LEFT JOIN TGFLOC LOC
+       ON EST.CODLOCAL = LOC.CODLOCAL
+      AND LOC.CODLOCAL = PRO.CODLOCALPADRAO
+WHERE
+    (PRO.ESTMAX - (NVL(EST.ESTOQUE,0) - NVL(EST.RESERVADO,0)) > 0)
+    AND (GRU.CODGRUPOPROD = $P{P_CODGRUPOPROD} OR $P{P_CODGRUPOPROD} IS NULL)
+    AND (PRO.CODPROD = $P{P_CODPROD} OR $P{P_CODPROD} IS NULL)
+    AND ((LOC.CODLOCAL IN (SELECT CODLOCAL FROM TGFLOC WHERE AD_CODUSU = $P{P_USUARIO}) AND $P{P_USUARIO} IS NOT NULL) OR $P{P_USUARIO} IS NULL )
+GROUP BY
+    GRU.CODGRUPOPROD,
+    GRU.DESCRGRUPOPROD,
+    PRO.CODPROD,
+    PRO.DESCRPROD,
+    PRO.CODVOL,
+    LOC.CODLOCAL,
+    LOC.DESCRLOCAL,
+    PRO.ESTMIN,
+    PRO.ESTMAX,
+    NVL(PRO.ESTMAX,0)
+HAVING SUM(NVL(EST.ESTOQUE,0)) <= PRO.ESTMIN
+ORDER BY PRO.CODPROD]]>
+	</queryString>
+	<field name="CODGRUPOPROD" class="java.math.BigDecimal"/>
+	<field name="DESCRICAO_GRUPO" class="java.lang.String"/>
+	<field name="COD_PRODUTO" class="java.math.BigDecimal"/>
+	<field name="DESCRICAO_PRODUTO" class="java.lang.String"/>
+	<field name="UNIDADE" class="java.lang.String"/>
+	<field name="COD_LEST" class="java.math.BigDecimal"/>
+	<field name="LOCAL_EST" class="java.lang.String"/>
+	<field name="ESTQ_MIN" class="java.math.BigDecimal"/>
+	<field name="ESTQ_MAX" class="java.math.BigDecimal"/>
+	<field name="ESTOQUE" class="java.math.BigDecimal"/>
+	<field name="NECESSIDADE_DE_COMPRA" class="java.math.BigDecimal"/>
 	<background>
 		<band splitType="Stretch"/>
 	</background>
-	<title>
-		<band height="79" splitType="Stretch"/>
-	</title>
 	<pageHeader>
-		<band height="35" splitType="Stretch"/>
+		<band height="80">
+			<staticText>
+				<reportElement x="121" y="30" width="560" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font size="12"/>
+				</textElement>
+				<text><![CDATA[RELATÓRIO - REPOSIÇÃO PELO ESTOQUE MIN/MAX GRUPO DE PRODUTO]]></text>
+			</staticText>
+		</band>
 	</pageHeader>
 	<columnHeader>
-		<band height="61" splitType="Stretch"/>
+		<band height="20" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="0" width="78" height="20"/>
+				<box>
+					<topPen lineWidth="0.25" lineStyle="Solid"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid"/>
+					<bottomPen lineWidth="0.25" lineStyle="Solid"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[GRUPO DO PRODUTO]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="78" y="0" width="100" height="20"/>
+				<box>
+					<topPen lineWidth="0.25" lineStyle="Solid"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid"/>
+					<bottomPen lineWidth="0.25" lineStyle="Solid"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[DESCRIÇÃO DO GRUPO]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="178" y="0" width="100" height="20"/>
+				<box>
+					<topPen lineWidth="0.25" lineStyle="Solid"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid"/>
+					<bottomPen lineWidth="0.25" lineStyle="Solid"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[CÓDIGO DO PRODUTO]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="278" y="0" width="117" height="20"/>
+				<box>
+					<topPen lineWidth="0.25" lineStyle="Solid"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid"/>
+					<bottomPen lineWidth="0.25" lineStyle="Solid"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[DESCRIÇÃO DO PRODUTO]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="395" y="0" width="48" height="20"/>
+				<box>
+					<topPen lineWidth="0.25" lineStyle="Solid"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid"/>
+					<bottomPen lineWidth="0.25" lineStyle="Solid"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[UNIDADE]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="443" y="0" width="94" height="20"/>
+				<box>
+					<topPen lineWidth="0.25" lineStyle="Solid"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid"/>
+					<bottomPen lineWidth="0.25" lineStyle="Solid"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[LOCAL]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="537" y="0" width="39" height="20"/>
+				<box>
+					<topPen lineWidth="0.25" lineStyle="Solid"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid"/>
+					<bottomPen lineWidth="0.25" lineStyle="Solid"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[EST MIN]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="576" y="0" width="63" height="20"/>
+				<box>
+					<topPen lineWidth="0.25" lineStyle="Solid"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid"/>
+					<bottomPen lineWidth="0.25" lineStyle="Solid"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[EST MAX]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="639" y="0" width="65" height="20"/>
+				<box>
+					<topPen lineWidth="0.25" lineStyle="Solid"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid"/>
+					<bottomPen lineWidth="0.25" lineStyle="Solid"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[ESTOQUE]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="704" y="0" width="98" height="20"/>
+				<box>
+					<topPen lineWidth="0.25" lineStyle="Solid"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid"/>
+					<bottomPen lineWidth="0.25" lineStyle="Solid"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[NECESSIDADE DE COMPRA]]></text>
+			</staticText>
+		</band>
 	</columnHeader>
 	<detail>
-		<band height="125" splitType="Stretch"/>
+		<band height="37" splitType="Stretch">
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="0" width="78" height="37"/>
+				<box bottomPadding="1">
+					<topPen lineStyle="Solid"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid"/>
+					<bottomPen lineWidth="0.25"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font size="7"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{CODGRUPOPROD}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="78" y="0" width="100" height="37"/>
+				<box bottomPadding="1">
+					<topPen lineStyle="Solid"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid"/>
+					<bottomPen lineWidth="0.25"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font size="7"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DESCRICAO_GRUPO}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="178" y="0" width="100" height="37"/>
+				<box bottomPadding="1">
+					<topPen lineStyle="Solid"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid"/>
+					<bottomPen lineWidth="0.25"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font size="7"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{COD_PRODUTO}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="278" y="0" width="117" height="37"/>
+				<box bottomPadding="1">
+					<topPen lineStyle="Solid"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid"/>
+					<bottomPen lineWidth="0.25"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font size="7"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{DESCRICAO_PRODUTO}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="395" y="0" width="48" height="37"/>
+				<box bottomPadding="1">
+					<topPen lineStyle="Solid"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid"/>
+					<bottomPen lineWidth="0.25"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font size="7"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{UNIDADE}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="443" y="0" width="94" height="37"/>
+				<box bottomPadding="1">
+					<topPen lineStyle="Solid"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid"/>
+					<bottomPen lineWidth="0.25"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font size="7"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{LOCAL_EST}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0.00" isBlankWhenNull="true">
+				<reportElement x="537" y="0" width="39" height="37"/>
+				<box bottomPadding="1">
+					<topPen lineStyle="Solid"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid"/>
+					<bottomPen lineWidth="0.25"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font size="7"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{ESTQ_MIN}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0.00" isBlankWhenNull="true">
+				<reportElement x="576" y="0" width="63" height="37"/>
+				<box bottomPadding="1">
+					<topPen lineStyle="Solid"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid"/>
+					<bottomPen lineWidth="0.25"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font size="7"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{ESTQ_MAX}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0.00" isBlankWhenNull="true">
+				<reportElement x="639" y="0" width="65" height="37"/>
+				<box bottomPadding="1">
+					<topPen lineStyle="Solid"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid"/>
+					<bottomPen lineWidth="0.25"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font size="7"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{ESTOQUE}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0.00" isBlankWhenNull="true">
+				<reportElement x="704" y="0" width="98" height="37"/>
+				<box bottomPadding="1">
+					<topPen lineStyle="Solid"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid"/>
+					<bottomPen lineWidth="0.25"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center">
+					<font size="7"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{NECESSIDADE_DE_COMPRA}]]></textFieldExpression>
+			</textField>
+		</band>
 	</detail>
-	<columnFooter>
-		<band height="45" splitType="Stretch"/>
-	</columnFooter>
-	<pageFooter>
-		<band height="54" splitType="Stretch"/>
-	</pageFooter>
-	<summary>
-		<band height="42" splitType="Stretch"/>
-	</summary>
 </jasperReport>
